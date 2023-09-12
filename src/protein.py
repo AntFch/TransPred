@@ -1,10 +1,24 @@
+#! /usr/bin/env python3
+
 """
 Module protein
 
-This module define protein class with its attributs and associated methods. It also defines residue class;
+This module define protein class with it attributs and associated methods. It also defines residue class.
 """
+#Import module
+##########################################################################################################
 
+import re
 
+try:
+    import numpy as np
+    from Bio.PDB import PDBParser
+    from Bio.PDB.DSSP import DSSP
+except ImportError as exception:
+	print("ERROR: Numpy or Biopython module is not installed. Advice: Use the transs_prot_pred.yaml file to create a powerfull environnment")
+
+#Define classes
+###########################################################################################################
 
 class Protein:
     def __init__(self, prot_name = None):
@@ -123,6 +137,8 @@ class Residue:
         else:
             return False
 
+#Define functions
+###########################################################################################################
 
 def parse_pdb(pdb_file, protein_name):
     """
@@ -156,4 +172,41 @@ def parse_pdb(pdb_file, protein_name):
                     #Define residue instance
                     residue = Residue(x, y, z, "CA", res_name, chain, position)
                     protein.add_residue(residue)
-    return protein                    
+    return protein
+
+
+def filter_solvent_accessible_area(pdb_file, protein, threshold):
+	"""
+	This function computes solvent accessible area from a pdb file using DSSP program 
+	with a Biopython API and filters exposed residue according to a threshold
+	
+	input:
+		pdb_file			str		path to PDB file to analyse
+		protein             object  A protein object to filter
+		threshold           folat   A threshold between 0 and 1 to filter aas values
+	return:
+		protein_filter	    object	Filtered protein object
+	"""
+	#Create new filtered protein
+	protein_name = protein.prot_name
+	protein_filter = Protein(protein_name)
+	#Parse PDB file
+	p = PDBParser()
+	structure = p.get_structure("prot", pdb_file)
+	model = structure[0]
+	#Use DSSP API to compute solvent accessible area
+	dssp = DSSP(model, pdb_file, dssp = "mkdssp")
+	#Extract keys to access DSSP results
+	residues_keys = list(dssp.keys())
+	#Extract for each residue solvent accessible area
+	for i in range(len(residues_keys)):
+	    #Get relative solvent exposed area and rount it to 4 digits
+	    key = residues_keys[i]
+	    chain = key[0]
+	    position = int(re.findall('\d+', str(key[1]))[0])
+	    aas = round(dssp[key][3], ndigits = 4)
+	    residue = protein.get_residue(chain, position)
+	    is_exposed = residue.is_solvent_exposed(aas, threshold)
+	    if is_exposed:
+	        protein_filter.add_residue(residue)
+	return protein_filter                        
