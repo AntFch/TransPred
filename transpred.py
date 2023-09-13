@@ -197,7 +197,10 @@ def process_chunk(sphere, protein, start, end):
                         if residue.is_hydrophobic():
                             nb_hydrophobic_exposed += 1
             
-            hydrophobic_ratio = round(nb_hydrophobic_exposed / nb_exposed, ndigits = 4)
+            if nb_exposed != 0:
+                hydrophobic_ratio = round(nb_hydrophobic_exposed / nb_exposed, ndigits = 4)
+            else:
+                hydrophobic_ratio = 0
             #Report distance for each d value tested                            
             result = [i, (a, b, c, free_coeff), nb_exposed, nb_hydrophobic_exposed, hydrophobic_ratio]
             chunk_result.append(result)                    
@@ -337,16 +340,16 @@ if __name__ == "__main__":
         membrane = memb.Membrane(1, sphere.global_radius, plane_coeff, mass_center)
         membrane.get_points()
     
-    #Create PDB file
-    if args.output is None:
-        output_pdb = f"{protein_name[0]}_membrane_{i + 1}.pdb"
-    else: 
-        output_pdb = os.path.join(args.output, f"{protein_name[0]}_membrane_{i + 1}.pdb")
-    memb.create_pdb_file(args.input, output_pdb, membrane)
+        #Create PDB file
+        if args.output is None:
+            output_pdb = f"{protein_name[0]}_membrane_{i + 1}.pdb"
+        else: 
+            output_pdb = os.path.join(args.output, f"{protein_name[0]}_membrane_{i + 1}.pdb")    
+        memb.create_pdb_file(args.input, output_pdb, membrane)
 
     print("### Output generated ###")
 
     #Compute run time
     end_time = time.time()
     run_time = compute_run_time(start_time, end_time)
-    print(f"Run time: {run_time}")               
+    print(f"Run time: {run_time}")
