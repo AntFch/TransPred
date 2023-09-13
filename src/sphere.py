@@ -20,53 +20,29 @@ class Sphere:
     """
     This class define some element of a half sphere which encompass a protein
     """
-    def __init__(self, x, y, z):
+    def __init__(self, x, y, z, radius):
         """
         This function assigns surface points and center coordinates attributs
         input:
-        x   float   x center coordinate
-        y   float   y center coordinate
-        z   float   z center coordinate
+        x       float   x center coordinate
+        y       float   y center coordinate
+        z       float   z center coordinate
+        radius  float   sphere radius
         """
+        #Define surface points list
         self.surface_points = []
+        #Define center coordinate and radius
         self.x_center, self.y_center, self.z_center = x, y, z
+        self.global_radius = radius
+        #Define constant which will be useful to generate points
         self.PHI = (1 + math.sqrt(5)) / 2
         self.GOLDEN_ANGLE = (2 * math.pi) / (self.PHI**2)
-
-    def assign_axis(self, max_coordinate_axis, max_coordinate_value):
-        """
-        This function allow to assign axis according to axis which contains max coordinate value.
-        It return the space orientation
-        input:
-        max_coordinate_axis     str     axis which max coordinate is observed
-        max_coordinate_value    float   maximum coordinate value observed
-        """
-        self.vertical_axis_max = max_coordinate_value
-        self.vertical_axis = max_coordinate_axis
-        if max_coordinate_axis == "x":
-            self.cos_axis = "y"
-            self.sin_axis = "z"
-            self.vertical_axis_center = self.x_center
-            self.cos_axis_center = self.y_center
-            self.sin_axis_center = self.z_center
-        elif max_coordinate_axis == "y":
-            self.cos_axis = "x"
-            self.sin_axis = "z"
-            self.vertical_axis_center = self.y_center
-            self.cos_axis_center = self.x_center
-            self.sin_axis_center = self.z_center
-        else:
-            self.cos_axis = "x"
-            self.sin_axis = "y"
-            self.vertical_axis_center = self.z_center
-            self.cos_axis_center = self.x_center
-            self.sin_axis_center = self.y_center
-
-    def compute_global_radius(self):
-        """
-        This function allows to compute sphere radius in order to encompass the whole protein
-        """
-        self.global_radius = self.vertical_axis_max - self.vertical_axis_center
+        #Assign axis
+        self.vertical_axis = "y"
+        self.cos_axis = "x"
+        self.sin_axis = "z"
+        #Assign max coordinate value in vertical axis
+        self.y_max = self.y_center + self.global_radius
 
     def get_vertical_incrementation(self, point_number):
         """
@@ -86,21 +62,14 @@ class Sphere:
         incremntation_value  int  a integer providing by the loop (for i in range(point_number)) 
         """
         #Define coordinate on vertical axis
-        vertical_axis_coor = self.vertical_axis_max - (incrementation_value * self.incrementation)
+        y = self.y_max - (incrementation_value * self.incrementation)
         #Define local radius which corresponding to a cercle plane
-        local_radius = math.sqrt(self.global_radius**2 - (vertical_axis_coor - self.vertical_axis_center)**2)
+        local_radius = math.sqrt(self.global_radius**2 - (y - self.y_center)**2)
         #Define angle in order to place it on the surface
         local_angle = self.GOLDEN_ANGLE * incrementation_value
         #Define cos_axis and sin_axis coordinate
-        cos_axis_coor = self.cos_axis_center + math.cos(local_angle) * local_radius
-        sin_axis_coor = self.sin_axis_center + math.sin(local_angle) * local_radius
-        #Define typle coordinate to add
-        if self.vertical_axis == "x": 
-            x, y, z = vertical_axis_coor, cos_axis_coor, sin_axis_coor
-        elif self.vertical_axis == "y":
-            x, y, z = cos_axis_coor, vertical_axis_coor, sin_axis_coor
-        else:
-            x, y, z = cos_axis_coor, sin_axis_coor, vertical_axis_coor
+        x = self.x_center + math.cos(local_angle) * local_radius
+        z = self.z_center + math.sin(local_angle) * local_radius
         self.surface_points.append([x, y, z])
 
     def get_vector(self, surface_point):

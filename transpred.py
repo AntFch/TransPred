@@ -30,7 +30,7 @@ except ImportError as exception:
 #Define argument
 ############################################################################################################
 
-parser = argparse.ArgumentParser(prog = "trans_prot_pred.py",
+parser = argparse.ArgumentParser(prog = "transpred.py",
 description = "This program allows to predict membrane plane position from a PDB file.")
 parser.add_argument("-i", "--input", type = str, help = "PDB file to parse.")
 parser.add_argument("-o", "--output", type = str, help = "Output path directory")
@@ -292,22 +292,20 @@ if __name__ == "__main__":
     
     #Parse PDB file
     protein = prot.parse_pdb(args.input, protein_name)
-    max_coordinate, axis = protein.get_max_coordinate()
+    #max_coordinate, axis = protein.get_max_coordinate()
     print("### PDB file parsed ###")
     
     #Compute mass center of non filtered protein
     x_center, y_center, z_center = protein.compute_mass_center()
+    max_distance = protein.get_most_distant_residue([x_center, y_center, z_center])
     print("### Mass center calculated ###")
     
     #Focus on exposed residues
     protein_filter = prot.filter_solvent_accessible_area(args.input, protein, args.threshold)
-    #max_coordinate, axis = protein_filter.get_max_coordinate()
     print("### Solvent exposed residues got ###")
     
-    #Build test points from a sphere
-    sphere = sph.Sphere(x_center, y_center, z_center)
-    sphere.assign_axis(axis, max_coordinate)
-    sphere.compute_global_radius()
+    #Build test points
+    sphere = sph.Sphere(x_center, y_center, z_center, max_distance)
     
     point_number = int(args.point / 2)
     sphere.get_vertical_incrementation(point_number)
@@ -339,18 +337,16 @@ if __name__ == "__main__":
         membrane = memb.Membrane(1, sphere.global_radius, plane_coeff, mass_center)
         membrane.get_points()
     
-    #Compute run time
-    end_time = time.time()
-    run_time = compute_run_time(start_time, end_time)
-    print(f"Run time: {run_time}")
-    
-    
     #Create PDB file
     if args.output is None:
         output_pdb = f"{protein_name[0]}_membrane_{i + 1}.pdb"
     else: 
         output_pdb = os.path.join(args.output, f"{protein_name[0]}_membrane_{i + 1}.pdb")
     memb.create_pdb_file(args.input, output_pdb, membrane)
-    
-    
-                    
+
+    print("### Output generated ###")
+
+    #Compute run time
+    end_time = time.time()
+    run_time = compute_run_time(start_time, end_time)
+    print(f"Run time: {run_time}")               

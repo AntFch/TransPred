@@ -8,6 +8,7 @@ This module define protein class with it attributs and associated methods. It al
 #Import module
 ##########################################################################################################
 
+import math
 import re
 
 try:
@@ -70,6 +71,23 @@ class Protein:
             if residue.chain == chain and residue.position == position:
                 break
         return residue
+
+    def get_most_distant_residue(self, mass_center):
+        """
+        This function computes the most distant residue for a protein
+        input:
+            mass_center     list   Mass center coordinates (x, y, z)
+        output:
+            max_distance    float   max observed distance
+        """
+        distance_list = []
+        for residue in self.residues:
+            #Compute distance for each residue
+            distance = math.sqrt((residue.x - mass_center[0])**2 + (residue.y - mass_center[1])**2 + (residue.z - mass_center[2])**2)
+            distance_list.append(distance)
+        max_distance = max(distance_list)
+        return max_distance
+
 
     def get_max_coordinate(self):
         """
